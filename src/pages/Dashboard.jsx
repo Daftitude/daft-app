@@ -1,5 +1,5 @@
 // src/pages/Dashboard.jsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import TokenStats from '../components/TokenStats';
 import GasGauge from '../components/GasGauge';
 import CheckInScheduler from '../components/CheckInScheduler';
@@ -26,28 +26,78 @@ import ReminderModal from '../components/popouts/ReminderModal';
 import MarketplaceModal from '../components/popouts/MarketplaceModal';
 import PopoutContainer from '../components/popouts/PopoutContainer';
 import TokenSummaryCard from '../components/TokenSummaryCard';
-
+import BadgeDisplay from '../components/BadgeDisplay';
+import ParentBadgeCreator from '../components/ParentBadgeCreator';
+import BonusConfetti from '../components/BonusConfetti';
+import MyAchievementsModal from '../components/popouts/MyAchievementsModal';
+import { useToken } from '../context/TokenContext';
 
 export default function Dashboard() {
   const [activeModal, setActiveModal] = useState(null);
+  const [showAchievements, setShowAchievements] = useState(false);
+  const [customBadges, setCustomBadges] = useState(() => {
+    const saved = localStorage.getItem('customBadges');
+    return saved ? JSON.parse(saved) : [];
+  });
+  const [hasNewBadges, setHasNewBadges] = useState(false);
+  const { tokens } = useToken();
 
   const handleOpen = (modal) => setActiveModal(modal);
   const handleClose = () => setActiveModal(null);
 
+  const addCustomBadge = (badge) => {
+    const updated = [...customBadges, badge];
+    setCustomBadges(updated);
+    localStorage.setItem('customBadges', JSON.stringify(updated));
+  };
+
+  // Track new badge unlock
+  useEffect(() => {
+    const lastCheck = localStorage.getItem('lastBadgeTokens');
+    if (!lastCheck) {
+      localStorage.setItem('lastBadgeTokens', JSON.stringify(tokens));
+    } else {
+      const prev = JSON.parse(lastCheck);
+      const prevSum = Object.values(prev).reduce((a, b) => a + b, 0);
+      const currentSum = Object.values(tokens).reduce((a, b) => a + b, 0);
+      if (currentSum > prevSum) {
+        setHasNewBadges(true);
+      }
+    }
+  }, [tokens]);
+
+  const handleAchievementsClick = () => {
+    setHasNewBadges(false);
+    localStorage.setItem('lastBadgeTokens', JSON.stringify(tokens));
+    setShowAchievements(true);
+  };
+
   return (
     <div className="p-4 space-y-6">
-      <h2 className="text-2xl font-bold text-zinc-800 dark:text-zinc-100 mb-2">
-        🎯 Token & Performance Overview
-      </h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        <TokenSummaryCard />
-        <TokenStats />
+      {/* Top Overview */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div className="lg:col-span-2">
+          <TokenSummaryCard />
+        </div>
         <GasGauge />
       </div>
 
+      {/* Badge System */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <ParentBadgeCreator addBadge={addCustomBadge} />
+        <BadgeDisplay customBadges={customBadges} />
+        <BonusConfetti />
+      </div>
+
+      {/* Stats & Core */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <TokenStats />
         <CheckInScheduler />
         <AgreementStatus />
+      </div>
+
+      {/* Functional Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         <BonusTracker />
         <DBAForm />
         <FamilyPlanner />
@@ -62,7 +112,8 @@ export default function Dashboard() {
         <VotesBoard />
       </div>
 
-      <div className="flex flex-wrap gap-2 justify-center">
+      {/* Popout Launch Buttons */}
+      <div className="flex flex-wrap gap-2 justify-center mt-6">
         <button onClick={() => handleOpen('token')} className="btn">🔓 Token</button>
         <button onClick={() => handleOpen('dba')} className="btn">📄 DBA</button>
         <button onClick={() => handleOpen('trust')} className="btn">🤝 Trust</button>
@@ -71,8 +122,21 @@ export default function Dashboard() {
         <button onClick={() => handleOpen('task')} className="btn">✅ Task</button>
         <button onClick={() => handleOpen('reminder')} className="btn">⏰ Reminder</button>
         <button onClick={() => handleOpen('marketplace')} className="btn">🛒 Market</button>
+        
+        <button
+          onClick={handleAchievementsClick}
+          className={`btn relative transition-all duration-300 ${
+            hasNewBadges ? 'animate-pulse ring-2 ring-yellow-400' : ''
+          }`}
+        >
+          🏅 My Achievements
+          {hasNewBadges && (
+            <span className="absolute top-0 right-0 mt-1 mr-1 h-2 w-2 rounded-full bg-red-500 shadow-md animate-ping" />
+          )}
+        </button>
       </div>
 
+      {/* Modals */}
       <PopoutContainer>
         {activeModal === 'token' && <TokenModal onClose={handleClose} />}
         {activeModal === 'dba' && <DBAModal onClose={handleClose} />}
@@ -82,6 +146,7 @@ export default function Dashboard() {
         {activeModal === 'task' && <TaskModal onClose={handleClose} />}
         {activeModal === 'reminder' && <ReminderModal onClose={handleClose} />}
         {activeModal === 'marketplace' && <MarketplaceModal onClose={handleClose} />}
+        {showAchievements && <MyAchievementsModal onClose={() => setShowAchievements(false)} />}
       </PopoutContainer>
     </div>
   );
