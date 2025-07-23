@@ -1,29 +1,22 @@
-// src/components/TokenSummaryCard.jsx
+// TokenSummaryCard.jsx
 import React from 'react';
+import { useToken } from '../context/TokenContext'; // make sure this path is correct
 
-const TokenSummaryCard = () => {
+export default function TokenSummaryCard() {
+  const { tokens } = useToken();
+
+  if (!tokens) return null; // Safety check (optional)
+
   return (
-    <div className="bg-white dark:bg-zinc-800 shadow-xl rounded-2xl p-6">
-      <h3 className="text-xl font-semibold mb-2">💰 Token Summary</h3>
-      <div className="grid grid-cols-3 gap-4">
-        <div className="text-center">
-          <p className="text-sm text-gray-500">K Tokens</p>
-          <p className="text-2xl font-bold text-blue-500">42</p>
-        </div>
-        <div className="text-center">
-          <p className="text-sm text-gray-500">D Tokens</p>
-          <p className="text-2xl font-bold text-green-500">68</p>
-        </div>
-        <div className="text-center">
-          <p className="text-sm text-gray-500">KD Tokens</p>
-          <p className="text-2xl font-bold text-purple-500">110</p>
-        </div>
-      </div>
-      <div className="mt-4 text-xs text-gray-400 text-center">
-        Backed by 0.2 TEP Collateral
-      </div>
+    <div className="bg-white p-4 rounded-xl shadow-md">
+      <h3 className="text-lg font-semibold mb-2">🎖️ Token Summary</h3>
+      <ul className="space-y-1">
+        {Object.entries(tokens).map(([type, count]) => (
+          <li key={type} className="text-sm">
+            <span className="font-medium">{type}:</span> {count}
+          </li>
+        ))}
+      </ul>
     </div>
   );
-};
-
-export default TokenSummaryCard;
+}
