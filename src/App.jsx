@@ -1,7 +1,20 @@
+import Navbar from './components/Navbar'
+import { Routes, Route } from 'react-router-dom'
+import Dashboard from './pages/Dashboard'
+import Parent from './pages/Parent'
+import Child from './pages/Child'
+import Admin from './pages/Admin'
+
 export default function App() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-900 to-black text-white flex items-center justify-center">
-      <h1 className="text-5xl font-bold">🚀 DAFT App is Live</h1>
+    <div className="min-h-screen bg-gray-900 text-white">
+      <Navbar/>
+      <Routes>
+        <Route path="/" element={<Dashboard />} />
+        <Route path="/parent" element={<Parent />} />
+        <Route path="/child" element={<Child />} />
+        <Route path="/admin" element={<Admin />} />
+      </Routes>
     </div>
-  );
+  )
 }
